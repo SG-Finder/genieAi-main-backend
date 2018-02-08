@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.transaction.Transactional;
 import java.util.List;
 
 @RestController
@@ -34,6 +35,7 @@ public class GameController {
     }
 
     @RequestMapping(value = "/result", method = RequestMethod.POST, consumes = "application/json")
+    @Transactional
     public void getResultOfGame(@RequestBody GameResultCommand command) {
 
         // update winner score & point
@@ -61,16 +63,49 @@ public class GameController {
                 winner.getId());
 
         // update winner weaponRelation
-         List<WeaponRelation> winnerWeaponRelation = weaponRelationRepository.findByPlayerId(winner);
-         for (WeaponRelation data : winnerWeaponRelation) {
-             if (data.getUsableCount() > 0) {
-                 weaponRelationRepository.updateWeaponRelation(data.getUsableCount() - 1,
-                         winner.getId(),
-                         data.getWeaponId().getId());
-             }
-         }
+        List<WeaponRelation> winnerWeaponRelation = weaponRelationRepository.findByPlayerId(winner);
+        for (WeaponRelation data : winnerWeaponRelation) {
+            if (data.getUsableCount() > 0) {
+                weaponRelationRepository.updateWeaponRelation(data.getUsableCount() - 1,
+                        winner.getId(),
+                        data.getWeaponId().getId());
+            }
+        }
 
          // update loser score & point
+        PlayerModel loser = playerRepository.findByNickname(command.getLoser()).get();
+        if (loser.getScore() > 15) {
+            loser.setScore(loser.getScore() - 15);
+        }
+        else {
+            loser.setScore(0);
+        }
+        loser.setPoint(loser.getPoint() + 10);
+
+        if (loser.getTier() == Tier.GOLD && loser.getScore() < 400) {
+            loser.setTier(Tier.SILVER);
+        }
+        else if (loser.getTier() == Tier.SILVER && loser.getScore() < 200) {
+            loser.setTier(Tier.BRONZE);
+        }
+        playerRepository.updatePlayerInfo(loser.getPoint(),
+                loser.getScore(),
+                loser.getTier(),
+                loser.getId());
+
+        // update loser hisotry
+        HistoryModel loserHistory = historyRepository.findByPlayerId(loser).get();
+        historyRepository.updateLoserHistory(loserHistory.getLose() + 1, loser.getId());
+
+        // update loser weaponRelation
+        List<WeaponRelation> loserWeaponRelation = weaponRelationRepository.findByPlayerId(loser);
+        for (WeaponRelation data : loserWeaponRelation) {
+            if (data.getUsableCount() > 0) {
+                weaponRelationRepository.updateWeaponRelation(data.getUsableCount() - 1,
+                        loser.getId(),
+                        data.getWeaponId().getId());
+            }
+        }
 
     }
 
