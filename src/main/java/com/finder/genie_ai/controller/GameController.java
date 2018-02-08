@@ -48,6 +48,10 @@ public class GameController {
         else if (winner.getTier() == Tier.SILVER && winner.getScore() > 400) {
             winner.setTier(Tier.GOLD);
         }
+        playerRepository.updatePlayerInfo(winner.getPoint(),
+                winner.getScore(),
+                winner.getTier().toString(),
+                winner.getId());
 
         // update winner history
         HistoryModel winnerHistory = historyRepository.findByPlayerId(winner).get();
@@ -90,7 +94,7 @@ public class GameController {
         }
         playerRepository.updatePlayerInfo(loser.getPoint(),
                 loser.getScore(),
-                loser.getTier(),
+                loser.getTier().toString(),
                 loser.getId());
 
         // update loser hisotry
