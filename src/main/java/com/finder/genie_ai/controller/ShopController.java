@@ -8,7 +8,9 @@ import com.finder.genie_ai.dao.WeaponRelationRepository;
 import com.finder.genie_ai.dao.WeaponRepository;
 import com.finder.genie_ai.dto.PlayerWeaponDTO;
 import com.finder.genie_ai.dto.ShopDealDTO;
+import com.finder.genie_ai.enumdata.Weapon;
 import com.finder.genie_ai.exception.BadRequestException;
+import com.finder.genie_ai.exception.NotFoundException;
 import com.finder.genie_ai.exception.UnauthorizedException;
 import com.finder.genie_ai.model.BaseListItemModel;
 import com.finder.genie_ai.model.game.BaseItemModel;
@@ -136,15 +138,18 @@ public class ShopController {
             System.out.println(Integer.parseInt(count));
             throw new BadRequestException("invalid data type");
         }
-        BaseListItemModel<WeaponModel> itemDatas = new BaseListItemModel();
+
         //Todo paging 처리
         if (itemType.equals("weapon")) {
+            BaseListItemModel<WeaponModel> itemDatas = new BaseListItemModel();
             List<WeaponModel> list = weaponRepository.findAll();
             itemDatas.setDatas(list);
             itemDatas.setCount(list.size());
             itemDatas.setCursor(presentCursor + 1);
+
+            return itemDatas;
         }
 
-        return itemDatas;
+        throw new NotFoundException("not found itemType in item table");
     }
 }
