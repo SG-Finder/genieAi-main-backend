@@ -32,7 +32,7 @@ public class RedisConfig {
         JedisConnectionFactory jedisConnectionFactory = new JedisConnectionFactory(jedisPoolConfig());
         jedisConnectionFactory.setHostName(redisHost);
         jedisConnectionFactory.setPort(redisPort);
-        //jedisConnectionFactory.setPassword(password);
+        jedisConnectionFactory.setPassword(password);
         jedisConnectionFactory.setUsePool(true);
         return  jedisConnectionFactory;
     }
