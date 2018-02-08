@@ -1,5 +1,6 @@
 package com.finder.genie_ai.dao;
 
+import com.finder.genie_ai.enumdata.Tier;
 import com.finder.genie_ai.model.game.player.PlayerModel;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -21,4 +22,12 @@ public interface PlayerRepository extends JpaRepository<PlayerModel, Integer> {
     @Query(value = "UPDATE players SET point = :point WHERE id = :playerId", nativeQuery = true)
     int updatePlayerPoint(@Param("point") int point,
                           @Param("playerId") int playerId);
+
+    @Modifying
+    @Query(value = "UPDATE players SET point = :point, score = :score, tier = :tier WHERE id = :playerId")
+    int updatePlayerInfo(@Param("point") int point,
+                         @Param("score") int score,
+                         @Param("tier") Tier tier,
+                         @Param("playerId") int playerId);
+
 }

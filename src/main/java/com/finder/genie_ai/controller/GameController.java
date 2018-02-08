@@ -1,10 +1,77 @@
 package com.finder.genie_ai.controller;
 
+import com.finder.genie_ai.controller.command.GameResultCommand;
+import com.finder.genie_ai.dao.HistoryRepository;
+import com.finder.genie_ai.dao.PlayerRepository;
+import com.finder.genie_ai.dao.WeaponRelationRepository;
+import com.finder.genie_ai.enumdata.Tier;
+import com.finder.genie_ai.model.game.history.HistoryModel;
+import com.finder.genie_ai.model.game.item_relation.WeaponRelation;
+import com.finder.genie_ai.model.game.player.PlayerModel;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequestMapping(value = "/finder")
 public class GameController {
-    
+
+    private PlayerRepository playerRepository;
+    private WeaponRelationRepository weaponRelationRepository;
+    private HistoryRepository historyRepository;
+
+    @Autowired
+    public GameController(PlayerRepository playerRepository,
+                          WeaponRelationRepository weaponRelationRepository,
+                          HistoryRepository historyRepository) {
+        this.playerRepository = playerRepository;
+        this.weaponRelationRepository = weaponRelationRepository;
+        this.historyRepository = historyRepository;
+    }
+
+    @RequestMapping(value = "/result", method = RequestMethod.POST, consumes = "application/json")
+    public void getResultOfGame(@RequestBody GameResultCommand command) {
+
+        // update winner score & point
+        PlayerModel winner = playerRepository.findByNickname(command.getWinner()).get();
+        winner.setScore(winner.getScore() + 20);
+        winner.setPoint(winner.getPoint() + 20);
+        if (winner.getTier() == Tier.BRONZE && winner.getScore() > 200) {
+            winner.setTier(Tier.SILVER);
+        }
+        else if (winner.getTier() == Tier.SILVER && winner.getScore() > 400) {
+            winner.setTier(Tier.GOLD);
+        }
+
+        // update winner history
+        HistoryModel winnerHistory = historyRepository.findByPlayerId(winner).get();
+        if (command.isFinder()) {
+            winnerHistory.setFinder(winnerHistory.getFinder() + 1);
+        }
+        if (command.isOneShot()) {
+            winnerHistory.setOneShot(winnerHistory.getOneShot() + 1);
+        }
+        historyRepository.updateWinnerHistory(winnerHistory.getFinder(),
+                winnerHistory.getOneShot(),
+                winnerHistory.getWin() + 1,
+                winner.getId());
+
+        // update winner weaponRelation
+         List<WeaponRelation> winnerWeaponRelation = weaponRelationRepository.findByPlayerId(winner);
+         for (WeaponRelation data : winnerWeaponRelation) {
+             if (data.getUsableCount() > 0) {
+                 weaponRelationRepository.updateWeaponRelation(data.getUsableCount() - 1,
+                         winner.getId(),
+                         data.getWeaponId().getId());
+             }
+         }
+
+         // update loser score & point
+
+    }
+
 }
