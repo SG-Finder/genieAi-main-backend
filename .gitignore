@@ -24,4 +24,7 @@ nbdist/
 .nb-gradle/
 
 ### properties ###
-application.properties
+*.properties
+
+### log file ###
+*.log
