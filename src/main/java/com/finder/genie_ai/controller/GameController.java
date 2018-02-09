@@ -9,11 +9,13 @@ import com.finder.genie_ai.model.game.history.HistoryModel;
 import com.finder.genie_ai.model.game.item_relation.WeaponRelation;
 import com.finder.genie_ai.model.game.player.PlayerModel;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
 import java.util.List;
 
@@ -36,7 +38,8 @@ public class GameController {
 
     @RequestMapping(value = "/result", method = RequestMethod.POST, consumes = "application/json")
     @Transactional
-    public void getResultOfGame(@RequestBody GameResultCommand command) {
+    public void getResultOfGame(@RequestBody GameResultCommand command,
+                                HttpServletResponse response) {
 
         // update winner score & point
         PlayerModel winner = playerRepository.findByNickname(command.getWinner()).get();
@@ -110,6 +113,7 @@ public class GameController {
                         data.getWeaponId().getId());
             }
         }
+        response.setStatus(HttpStatus.NO_CONTENT.value());
 
     }
 

@@ -29,5 +29,5 @@ public class GenieController {
         JsonParser parser = new JsonParser();
         return parser.parse(GenieHost.questionToGenie(question)).getAsJsonObject();
     }
-    
+
 }
