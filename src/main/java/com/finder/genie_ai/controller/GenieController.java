@@ -41,6 +41,7 @@ public class GenieController {
         if (!sessionTokenRedisRepository.isSessionValid(token)) {
             throw new UnauthorizedException();
         }
+        //TODO modularization this part
         JsonElement element = new JsonParser().parse(sessionTokenRedisRepository.findSessionToken(token));
         SessionModel sessionModel = new SessionModel(request.getRemoteAddr(), LocalDateTime.parse(element.getAsJsonObject().get("signin_at").getAsString()), LocalDateTime.now());
         sessionTokenRedisRepository.updateSessionToken(token, mapper.writeValueAsString(sessionModel));

@@ -6,7 +6,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.GsonHttpMessageConverter;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
+import springfox.documentation.spring.web.json.Json;
 
 import java.lang.reflect.Type;
 import java.time.LocalDate;
@@ -28,6 +30,7 @@ public class WebMvcConfig extends WebMvcConfigurerAdapter {
         Gson gson = new GsonBuilder()
                 .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
                 .registerTypeAdapter(LocalDate.class, new LocalDateAdapter())
+                .registerTypeAdapter(Json.class, new SpringfoxJsonToGsonAdapter())
                 .create();
 
         GsonHttpMessageConverter gsonConverter = new GsonHttpMessageConverter();
@@ -50,5 +53,14 @@ public class WebMvcConfig extends WebMvcConfigurerAdapter {
             return new JsonPrimitive(date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
         }
 
+    }
+
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        registry.addResourceHandler("swagger-ui.html")
+                .addResourceLocations("classpath:/META-INF/resources/");
+
+        registry.addResourceHandler("/webjars/**")
+                .addResourceLocations("classpath:/META-INF/resources/webjars/");
     }
 }
