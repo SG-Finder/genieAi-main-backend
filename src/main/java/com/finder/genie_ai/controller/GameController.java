@@ -5,11 +5,17 @@ import com.finder.genie_ai.dao.HistoryRepository;
 import com.finder.genie_ai.dao.PlayerRepository;
 import com.finder.genie_ai.dao.WeaponRelationRepository;
 import com.finder.genie_ai.enumdata.Tier;
+import com.finder.genie_ai.exception.BadRequestException;
 import com.finder.genie_ai.model.game.history.HistoryModel;
 import com.finder.genie_ai.model.game.item_relation.WeaponRelation;
 import com.finder.genie_ai.model.game.player.PlayerModel;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -17,10 +23,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
+import javax.validation.Valid;
 import java.util.List;
 
 @RestController
 @RequestMapping(value = "/finder")
+@Api(value = "GenieAi result game", description = "Operations pertaining to game's result register")
 public class GameController {
 
     private PlayerRepository playerRepository;
@@ -36,10 +44,22 @@ public class GameController {
         this.historyRepository = historyRepository;
     }
 
+
+    //TODO authorization about game server, have to set some token connect with game server
+    @ApiOperation(value = "Throw data that is result of any round of game")
+    @ApiResponses(value = {
+            @ApiResponse(code = 204, message = "Successfully register result of game"),
+            @ApiResponse(code = 400, message = "invalid parameter form"),
+            @ApiResponse(code = 500, message = "Internal server error")
+    })
     @RequestMapping(value = "/result", method = RequestMethod.POST, consumes = "application/json")
     @Transactional
-    public void getResultOfGame(@RequestBody GameResultCommand command,
+    public void getResultOfGame(@RequestBody @Valid GameResultCommand command,
+                                BindingResult bindingResult,
                                 HttpServletResponse response) {
+        if (bindingResult.hasErrors()) {
+            throw new BadRequestException("invalid parameter form");
+        }
 
         // update winner score & point
         PlayerModel winner = playerRepository.findByNickname(command.getWinner()).get();

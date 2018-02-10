@@ -6,6 +6,7 @@ import com.finder.genie_ai.dao.*;
 import com.finder.genie_ai.dto.HistoryDTO;
 import com.finder.genie_ai.dto.PlayerDTO;
 import com.finder.genie_ai.dto.PlayerWeaponDTO;
+import com.finder.genie_ai.dto.ShopDealDTO;
 import com.finder.genie_ai.exception.BadRequestException;
 import com.finder.genie_ai.exception.DuplicateException;
 import com.finder.genie_ai.exception.NotFoundException;
@@ -18,6 +19,10 @@ import com.finder.genie_ai.model.session.SessionModel;
 import com.finder.genie_ai.redis_dao.SessionTokenRedisRepository;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.convention.MatchingStrategies;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +38,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping(value = "finder/player")
+@Api(value = "genieAi Player", description = "Operations pertaining to player rest api")
 public class PlayerController {
 
     private PlayerRepository playerRepository;
@@ -61,6 +67,14 @@ public class PlayerController {
         this.mapper = mapper;
     }
 
+    @ApiOperation(value = "User register nickname for playing game", response = PlayerDTO.class)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully register nickname"),
+            @ApiResponse(code = 400, message = "Invalid parameter form"),
+            @ApiResponse(code = 401, message = "Invalid or expired session-token"),
+            @ApiResponse(code = 409, message = "Duplicated nickname"),
+            @ApiResponse(code = 500, message = "Internal server error")
+    })
     @Transactional
     @RequestMapping(value = "/register", method = RequestMethod.POST, produces = "application/json")
     public @ResponseBody PlayerDTO registerPlayer(@RequestHeader(name = "session-token") String token,
@@ -82,7 +96,7 @@ public class PlayerController {
 
         // check duplicated nickname
         if (playerRepository.findByNickname(command.getNickname()).isPresent()) {
-            throw new DuplicateException("already exist nickname");
+            throw new DuplicateException("Duplicated nickname");
         }
 
         PlayerModel player = new PlayerModel();
@@ -117,7 +131,14 @@ public class PlayerController {
                 player.getPoint());
     }
 
-
+    @ApiOperation(value = "Get player information", response = PlayerDTO.class)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully get player information"),
+            @ApiResponse(code = 400, message = "Invalid parameter form"),
+            @ApiResponse(code = 401, message = "Invalid or expired session-token or Not enough money"),
+            @ApiResponse(code = 404, message = "Please check player nickname"),
+            @ApiResponse(code = 500, message = "Internal server error")
+    })
     @RequestMapping(value = "/{nickname}", method = RequestMethod.GET, produces = "application/json")
     public PlayerDTO getPlayerInfo(@PathVariable("nickname") String nickname,
                                    @RequestHeader("session-token") String token,
@@ -131,7 +152,7 @@ public class PlayerController {
 
         PlayerModel playerModel = playerRepository
                 .findByNickname(nickname)
-                .orElseThrow(() -> new NotFoundException("Doesn't find player"));
+                .orElseThrow(() -> new NotFoundException("Please check player nickname"));
 
         List<WeaponRelation> listWeaponRelation = weaponRelationRepository.findByPlayerId(playerModel);
 

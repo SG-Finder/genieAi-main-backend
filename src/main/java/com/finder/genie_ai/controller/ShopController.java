@@ -12,6 +12,7 @@ import com.finder.genie_ai.exception.BadRequestException;
 import com.finder.genie_ai.exception.NotFoundException;
 import com.finder.genie_ai.exception.UnauthorizedException;
 import com.finder.genie_ai.model.BaseListItemModel;
+import com.finder.genie_ai.model.game.BaseItemModel;
 import com.finder.genie_ai.model.game.item_relation.WeaponRelation;
 import com.finder.genie_ai.model.game.player.PlayerModel;
 import com.finder.genie_ai.model.game.weapon.WeaponModel;
@@ -19,6 +20,10 @@ import com.finder.genie_ai.model.session.SessionModel;
 import com.finder.genie_ai.redis_dao.SessionTokenRedisRepository;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.BindingResult;
@@ -34,6 +39,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping(value = "/finder/shop")
+@Api(value = "genieAi Shop", description = "Operations pertaining to shop rest api")
 public class ShopController {
 
     private SessionTokenRedisRepository sessionTokenRedisRepository;
@@ -56,6 +62,13 @@ public class ShopController {
         this.mapper = mapper;
     }
 
+    @ApiOperation(value = "Buy Item in game shop", response = ShopDealDTO.class)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully Buy Item"),
+            @ApiResponse(code = 400, message = "Invalid parameter form"),
+            @ApiResponse(code = 401, message = "Invalid or expired session-token or Not enough money"),
+            @ApiResponse(code = 500, message = "Internal server error")
+    })
     @Transactional
     @RequestMapping(value = "", method = RequestMethod.POST)
      public ShopDealDTO activeShop(@RequestHeader("session-token") String token,
@@ -70,7 +83,7 @@ public class ShopController {
         sessionTokenRedisRepository.updateSessionToken(token, mapper.writeValueAsString(sessionModel));
 
         if (bindingResult.hasErrors()) {
-            throw new BadRequestException("Not suitable parameter form");
+            throw new BadRequestException("Invalid parameter form");
         }
         //TODO minimize send query to MySQL database server by making join query on players table with other tables
         Optional<PlayerModel> player = playerRepository.findByNickname(command.getNickname());
@@ -81,7 +94,7 @@ public class ShopController {
         int totalPrice = command.getCount() * weapon.get().getPrice();
 
         if (playerPoint < totalPrice) {
-            throw new UnauthorizedException("doesn't enough money");
+            throw new UnauthorizedException("Not enough money");
         }
         //TODO check exist nickname & weapon name
 
@@ -118,11 +131,19 @@ public class ShopController {
         return shopDealDTO;
     }
 
+    @ApiOperation(value = "Get item list by choosing item type", response = BaseListItemModel.class)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully Buy Item"),
+            @ApiResponse(code = 400, message = "Required Integer parameter 'count or cursor' is not present"),
+            @ApiResponse(code = 401, message = "Invalid or expired session-token"),
+            @ApiResponse(code = 404, message = "Please check item type"),
+            @ApiResponse(code = 500, message = "Internal server error")
+    })
     @RequestMapping(value = "/{itemType}", method = RequestMethod.GET, produces = "application/json")
     public BaseListItemModel getItemList(@RequestHeader("session-token") String token,
-                                         @PathVariable("itemType") String itemType,
-                                         @RequestParam("count") String count,
-                                         @RequestParam("cursor") String cursor) {
+                                                        @PathVariable("itemType") String itemType,
+                                                        @RequestParam("count") String count,
+                                                        @RequestParam("cursor") String cursor) {
         if (!sessionTokenRedisRepository.isSessionValid(token)) {
             throw new UnauthorizedException();
         }
@@ -134,7 +155,7 @@ public class ShopController {
         }
         catch (NumberFormatException e) {
             System.out.println(Integer.parseInt(count));
-            throw new BadRequestException("invalid data type");
+            throw new BadRequestException("Required Integer parameter 'count or cursor' is not present");
         }
 
         //Todo paging 처리
@@ -148,6 +169,6 @@ public class ShopController {
             return itemDatas;
         }
 
-        throw new NotFoundException("not found itemType in item table");
+        throw new NotFoundException("Please check item type");
     }
 }
