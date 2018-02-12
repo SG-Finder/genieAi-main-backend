@@ -40,7 +40,7 @@ public class GenieController {
         this.mapper = mapper;
     }
 
-    @ApiOperation(value = "User register nickname for playing game")
+    @ApiOperation(value = "Send message to genie bot")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully send message"),
             @ApiResponse(code = 400, message = "Required String parameter 'user_message' is not present"),
@@ -66,7 +66,7 @@ public class GenieController {
         return parser.parse(messageTest).getAsJsonObject();
     }
 
-    @ApiOperation(value = "User register nickname for playing game")
+    @ApiOperation(value = "Order action to genie bot")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully order action"),
             @ApiResponse(code = 400, message = "Required String parameter 'order' is not present"),
@@ -89,7 +89,7 @@ public class GenieController {
         return parser.parse(GenieHost.orderActionToGenie(order)).getAsJsonObject();
     }
 
-    @ApiOperation(value = "User register nickname for playing game")
+    @ApiOperation(value = "Ask question to genie bot")
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully send question"),
             @ApiResponse(code = 400, message = "Required String parameter 'question' is not present"),

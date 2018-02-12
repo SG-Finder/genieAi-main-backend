@@ -23,7 +23,7 @@ public interface PlayerRepository extends JpaRepository<PlayerModel, Integer> {
     int updatePlayerPoint(@Param("point") int point,
                           @Param("playerId") int playerId);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query(value = "UPDATE players SET point = :point, score = :score, tier = :tier WHERE id = :playerId", nativeQuery = true)
     int updatePlayerInfo(@Param("point") int point,
                          @Param("score") int score,

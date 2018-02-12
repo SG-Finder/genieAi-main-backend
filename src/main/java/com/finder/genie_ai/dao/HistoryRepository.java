@@ -15,14 +15,14 @@ public interface HistoryRepository extends JpaRepository<HistoryModel, Integer> 
 
     Optional<HistoryModel> findByPlayerId(PlayerModel playerId);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query(value = "UPDATE history SET finder = :finder, one_shot = :oneShot, win = :win WHERE player_id = :playerId", nativeQuery = true)
     int updateWinnerHistory(@Param("finder") int finder,
                             @Param("oneShot") int oneShot,
                             @Param("win") int win,
                             @Param("playerId") int playerId);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query(value = "UPDATE history SET lose = :lose WHERE player_id = :playerId", nativeQuery = true)
     int updateLoserHistory(@Param("lose") int lose,
                            @Param("playerId") int playerId);

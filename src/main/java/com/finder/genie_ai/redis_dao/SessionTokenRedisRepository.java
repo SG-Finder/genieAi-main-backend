@@ -53,17 +53,6 @@ public class SessionTokenRedisRepository {
         return valueOps.get(tokenKey);
     }
 
-    @Deprecated
-    public boolean isSessionValid(String token, String userId) {
-        String key = SESSION + ":"  + token + ":" + userId;
-        if (valueOps.get(key) == null) {
-            return false;
-        }
-        else {
-            return true;
-        }
-    }
-
     public boolean isSessionValid(String token) {
         String tokenKey = SESSION + ":"  + token;
         if (valueOps.get(tokenKey) == null) {
@@ -76,12 +65,6 @@ public class SessionTokenRedisRepository {
 
     public String findSessionUserId(String userId) {
         return valueOps.get(USER + ":" + userId);
-    }
-
-    @Deprecated
-    public boolean deleteSession(String token, String userId) {
-        String tokenKey = SESSION + ":" + token + ":" + userId;
-        return valueOps.getOperations().expire(tokenKey, 0L, TimeUnit.NANOSECONDS);
     }
 
     public boolean expireSession(String token, String userId) {

@@ -21,7 +21,7 @@ public class RedisConfig {
     @Bean
     public JedisPoolConfig jedisPoolConfig() {
         JedisPoolConfig jedisPoolConfig = new JedisPoolConfig();
-        jedisPoolConfig.setMaxTotal(5);
+        jedisPoolConfig.setMaxTotal(30);
         jedisPoolConfig.setTestOnBorrow(true);
         jedisPoolConfig.setTestOnReturn(true);
         return jedisPoolConfig;
@@ -43,8 +43,7 @@ public class RedisConfig {
         template.setConnectionFactory(redisConnectionFactory());
         template.setKeySerializer(new StringRedisSerializer());
         template.setValueSerializer(new StringRedisSerializer());
-        template.setHashKeySerializer(new StringRedisSerializer());
-        template.setHashValueSerializer(new StringRedisSerializer());
+        template.setStringSerializer(new StringRedisSerializer());
         template.setEnableDefaultSerializer(false);
         template.setEnableTransactionSupport(true);
         return template;

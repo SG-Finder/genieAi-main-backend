@@ -1,14 +1,25 @@
 package com.finder.genie_ai.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.finder.genie_ai.controller.command.GameResultCommand;
 import com.finder.genie_ai.dao.HistoryRepository;
 import com.finder.genie_ai.dao.PlayerRepository;
 import com.finder.genie_ai.dao.WeaponRelationRepository;
+import com.finder.genie_ai.dto.LeaderBoardDTO;
+import com.finder.genie_ai.dto.PlayerRankModel;
 import com.finder.genie_ai.enumdata.Tier;
 import com.finder.genie_ai.exception.BadRequestException;
+import com.finder.genie_ai.exception.NotFoundException;
+import com.finder.genie_ai.exception.UnauthorizedException;
 import com.finder.genie_ai.model.game.history.HistoryModel;
 import com.finder.genie_ai.model.game.item_relation.WeaponRelation;
 import com.finder.genie_ai.model.game.player.PlayerModel;
+import com.finder.genie_ai.model.session.SessionModel;
+import com.finder.genie_ai.redis_dao.LeaderBoardRedisRepository;
+import com.finder.genie_ai.redis_dao.SessionTokenRedisRepository;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
@@ -16,14 +27,14 @@ import io.swagger.annotations.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
 import javax.validation.Valid;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -34,22 +45,32 @@ public class GameController {
     private PlayerRepository playerRepository;
     private WeaponRelationRepository weaponRelationRepository;
     private HistoryRepository historyRepository;
+    private SessionTokenRedisRepository sessionTokenRedisRepository;
+    private LeaderBoardRedisRepository leaderBoardRedisRepository;
+    private ObjectMapper mapper;
 
     @Autowired
     public GameController(PlayerRepository playerRepository,
                           WeaponRelationRepository weaponRelationRepository,
-                          HistoryRepository historyRepository) {
+                          HistoryRepository historyRepository,
+                          SessionTokenRedisRepository sessionTokenRedisRepository,
+                          LeaderBoardRedisRepository leaderBoardRedisRepository,
+                          ObjectMapper mapper) {
         this.playerRepository = playerRepository;
         this.weaponRelationRepository = weaponRelationRepository;
         this.historyRepository = historyRepository;
+        this.sessionTokenRedisRepository = sessionTokenRedisRepository;
+        this.leaderBoardRedisRepository = leaderBoardRedisRepository;
+        this.mapper = mapper;
     }
 
 
     //TODO authorization about game server, have to set some token connect with game server
+    //TODO NOT_FOUND error handler
     @ApiOperation(value = "Throw data that is result of any round of game")
     @ApiResponses(value = {
             @ApiResponse(code = 204, message = "Successfully register result of game"),
-            @ApiResponse(code = 400, message = "invalid parameter form"),
+            @ApiResponse(code = 400, message = "Invalid parameter form"),
             @ApiResponse(code = 500, message = "Internal server error")
     })
     @RequestMapping(value = "/result", method = RequestMethod.POST, consumes = "application/json")
@@ -133,8 +154,67 @@ public class GameController {
                         data.getWeaponId().getId());
             }
         }
+
+        // insert or update leaderboard in redis
+        leaderBoardRedisRepository.updateLeaderBoard(winner.getNickname(),
+                winner.getScore(),
+                loser.getNickname(),
+                loser.getScore());
+
+
         response.setStatus(HttpStatus.NO_CONTENT.value());
 
+    }
+
+    @ApiOperation(value = "Inquire leaderboard between 1 and 100", response = LeaderBoardDTO.class)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully get leaderboard information"),
+            @ApiResponse(code = 401, message = "Invalid or expired session-token"),
+            @ApiResponse(code = 404, message = "Doesn't have any rank information"),
+            @ApiResponse(code = 500, message = "Internal server error")
+    })
+    @RequestMapping(value = "/rank/leaderBoard", method = RequestMethod.GET, produces = "application/json")
+    @Transactional
+    public LeaderBoardDTO showRealTimerRankLeaderBoard(@RequestHeader("session-token") String token,
+                                                       HttpServletRequest request) throws JsonProcessingException {
+        if (!sessionTokenRedisRepository.isSessionValid(token)) {
+            throw new UnauthorizedException();
+        }
+        JsonElement element = new JsonParser().parse(sessionTokenRedisRepository.findSessionToken(token));
+        SessionModel sessionModel = new SessionModel(request.getRemoteAddr(), LocalDateTime.parse(element.getAsJsonObject().get("signin_at").getAsString()), LocalDateTime.now());
+        sessionTokenRedisRepository.updateSessionToken(token, mapper.writeValueAsString(sessionModel));
+
+        LeaderBoardDTO leaderBoardDTO = new LeaderBoardDTO();
+        leaderBoardDTO.setLeaderBoard(leaderBoardRedisRepository.getPlayersRankOfRange(0, 99));
+
+        if (leaderBoardDTO.getLeaderBoard().isEmpty()) {
+            throw new NotFoundException("Doesn't have any rank information");
+        }
+
+        leaderBoardDTO.setDate(LocalDate.now());
+        return leaderBoardDTO;
+    }
+
+    @ApiOperation(value = "Inquire player's rank & score", response = PlayerRankModel.class)
+    @ApiResponses(value = {
+            @ApiResponse(code = 200, message = "Successfully get player's rank & score"),
+            @ApiResponse(code = 401, message = "Invalid or expired session-token"),
+            @ApiResponse(code = 404, message = "Please check nickname"),
+            @ApiResponse(code = 500, message = "Internal server error")
+    })
+    @RequestMapping(value = "/rank/player/{nickname}", method = RequestMethod.GET, produces = "application/json")
+    @Transactional
+    public PlayerRankModel getPlayerRankWithScore(@RequestHeader("session-token") String token,
+                                                  @PathVariable("nickname") String nickname,
+                                                  HttpServletRequest request) throws JsonProcessingException {
+        if (!sessionTokenRedisRepository.isSessionValid(token)) {
+            throw new UnauthorizedException();
+        }
+        JsonElement element = new JsonParser().parse(sessionTokenRedisRepository.findSessionToken(token));
+        SessionModel sessionModel = new SessionModel(request.getRemoteAddr(), LocalDateTime.parse(element.getAsJsonObject().get("signin_at").getAsString()), LocalDateTime.now());
+        sessionTokenRedisRepository.updateSessionToken(token, mapper.writeValueAsString(sessionModel));
+
+        return leaderBoardRedisRepository.getOnePlayerRank(nickname);
     }
 
 }
