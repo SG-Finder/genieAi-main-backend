@@ -35,7 +35,7 @@ public class SwaggerConfig extends WebMvcConfigurerAdapter {
                 "GenieAi REST API for main",
                 "1.0",
                 "192.168.0.60:8081",
-                new Contact("codingsquid", "https://github.com/SG-Finder/genieAi-auth-backend", "gksxodnd007@gmail.com"),
+                new Contact("codingsquid", "https://github.com/SG-Finder/genieAi-main-backend", "gksxodnd007@gmail.com"),
                 "Apache License Version 2.0",
                 "https://www.apache.org/licenses/LICENSE-2.0",
                 new ArrayList<VendorExtension>() {
