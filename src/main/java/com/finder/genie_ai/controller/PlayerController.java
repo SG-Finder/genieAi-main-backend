@@ -37,7 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @RestController
-@RequestMapping(value = "finder/player")
+@RequestMapping(value = "/finder/player")
 @Api(value = "genieAi Player", description = "Operations pertaining to player rest api")
 public class PlayerController {
 
@@ -154,8 +154,6 @@ public class PlayerController {
                 .findByNickname(nickname)
                 .orElseThrow(() -> new NotFoundException("Please check player nickname"));
 
-        List<WeaponRelation> listWeaponRelation = weaponRelationRepository.findByPlayerId(playerModel);
-
         modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.LOOSE);
 
         PlayerDTO playerDTO = new PlayerDTO();
@@ -166,17 +164,6 @@ public class PlayerController {
         playerDTO.setHistory(modelMapper.map(historyModel, HistoryDTO.class));
         playerDTO.setPoint(playerModel.getPoint());
         playerDTO.setTier(playerModel.getTier());
-
-        if (listWeaponRelation.size() != 0) {
-            List<PlayerWeaponDTO> playerWeaponDTOs = new ArrayList<>(listWeaponRelation.size());
-
-            for (WeaponRelation data : listWeaponRelation) {
-                PlayerWeaponDTO dto = modelMapper.map(data.getWeaponId(), PlayerWeaponDTO.class);
-                dto.setUsableCount(data.getUsableCount());
-                playerWeaponDTOs.add(dto);
-            }
-            playerDTO.setWeapons(playerWeaponDTOs);
-        }
 
         return playerDTO;
     }

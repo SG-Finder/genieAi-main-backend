@@ -60,10 +60,19 @@ public class GenieController {
         SessionModel sessionModel = new SessionModel(request.getRemoteAddr(), LocalDateTime.parse(element.getAsJsonObject().get("signin_at").getAsString()), LocalDateTime.now());
         sessionTokenRedisRepository.updateSessionToken(token, mapper.writeValueAsString(sessionModel));
 
-        String messageTest = GenieHost.sendMessageToGenie(userMessage);
-        logger.info(messageTest);
         JsonParser parser = new JsonParser();
-        return parser.parse(messageTest).getAsJsonObject();
+        JsonObject genieMessage = parser.parse(GenieHost.sendMessageToGenie(userMessage)).getAsJsonObject();
+        String userMessageLog = "user-message : " + userMessage;
+        StringBuffer genieMessageLog = new StringBuffer();
+        genieMessageLog.append("genie-message : ");
+        genieMessageLog.append(genieMessage.get("genie_message").getAsString());
+        genieMessageLog.append(", genie-emotion : ");
+        genieMessageLog.append(genieMessage.get("emotion").getAsString());
+
+        logger.info(userMessageLog);
+        logger.info(genieMessageLog);
+
+        return genieMessage;
     }
 
     @ApiOperation(value = "Order action to genie bot")
@@ -83,7 +92,6 @@ public class GenieController {
         JsonElement element = new JsonParser().parse(sessionTokenRedisRepository.findSessionToken(token));
         SessionModel sessionModel = new SessionModel(request.getRemoteAddr(), LocalDateTime.parse(element.getAsJsonObject().get("signin_at").getAsString()), LocalDateTime.now());
         sessionTokenRedisRepository.updateSessionToken(token, mapper.writeValueAsString(sessionModel));
-
 
         JsonParser parser = new JsonParser();
         return parser.parse(GenieHost.orderActionToGenie(order)).getAsJsonObject();
@@ -106,7 +114,6 @@ public class GenieController {
         JsonElement element = new JsonParser().parse(sessionTokenRedisRepository.findSessionToken(token));
         SessionModel sessionModel = new SessionModel(request.getRemoteAddr(), LocalDateTime.parse(element.getAsJsonObject().get("signin_at").getAsString()), LocalDateTime.now());
         sessionTokenRedisRepository.updateSessionToken(token, mapper.writeValueAsString(sessionModel));
-
 
         JsonParser parser = new JsonParser();
         return parser.parse(GenieHost.questionToGenie(question)).getAsJsonObject();

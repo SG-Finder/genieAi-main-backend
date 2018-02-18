@@ -15,12 +15,12 @@ public class GenieHost {
 
     public static String orderActionToGenie(String action) {
         RestTemplate restTemplate = new RestTemplate();
-        return restTemplate.getForObject(genieActionURL, String.class);
+        return restTemplate.getForObject(genieActionURL + action, String.class);
     }
 
     public static String questionToGenie(String question) {
         RestTemplate restTemplate = new RestTemplate();
-        return restTemplate.getForObject(questionToGenieURL, String.class);
+        return restTemplate.getForObject(questionToGenieURL + question, String.class);
     }
 
 
