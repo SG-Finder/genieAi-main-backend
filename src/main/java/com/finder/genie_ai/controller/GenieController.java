@@ -5,6 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.finder.genie_ai.GenieAiApplication;
 import com.finder.genie_ai.controller.genie_command.GenieHost;
 import com.finder.genie_ai.dto.PlayerDTO;
+import com.finder.genie_ai.dto.genie_dto.GenieAction;
+import com.finder.genie_ai.dto.genie_dto.GenieMessage;
+import com.finder.genie_ai.dto.genie_dto.GenieQuestion;
 import com.finder.genie_ai.exception.UnauthorizedException;
 import com.finder.genie_ai.model.session.SessionModel;
 import com.finder.genie_ai.redis_dao.SessionTokenRedisRepository;
@@ -40,7 +43,7 @@ public class GenieController {
         this.mapper = mapper;
     }
 
-    @ApiOperation(value = "Send message to genie bot")
+    @ApiOperation(value = "Send message to genie bot", response = GenieMessage.class)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully send message"),
             @ApiResponse(code = 400, message = "Required String parameter 'user_message' is not present"),
@@ -75,7 +78,7 @@ public class GenieController {
         return genieMessage;
     }
 
-    @ApiOperation(value = "Order action to genie bot")
+    @ApiOperation(value = "Order action to genie bot", response = GenieAction.class)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully order action"),
             @ApiResponse(code = 400, message = "Required String parameter 'order' is not present"),
@@ -97,7 +100,7 @@ public class GenieController {
         return parser.parse(GenieHost.orderActionToGenie(order)).getAsJsonObject();
     }
 
-    @ApiOperation(value = "Ask question to genie bot")
+    @ApiOperation(value = "Ask question to genie bot", response = GenieQuestion.class)
     @ApiResponses(value = {
             @ApiResponse(code = 200, message = "Successfully send question"),
             @ApiResponse(code = 400, message = "Required String parameter 'question' is not present"),
