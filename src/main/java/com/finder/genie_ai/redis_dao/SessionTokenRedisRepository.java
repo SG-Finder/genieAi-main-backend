@@ -45,7 +45,7 @@ public class SessionTokenRedisRepository {
 
     public void updateSessionToken(String token, String data) {
         String tokenKey = SESSION + ":" + token;
-        valueOps.set(tokenKey, data, EXPIRED_TIME, TimeUnit.MINUTES);
+        valueOps.set(tokenKey, data, EXPIRED_TIME, TimeUnit.DAYS);
     }
 
     public String findSessionToken(String token) {
