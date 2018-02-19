@@ -17,6 +17,7 @@ import com.finder.genie_ai.model.session.SessionModel;
 import com.finder.genie_ai.redis_dao.SessionTokenRedisRepository;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import io.swagger.annotations.Api;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.convention.MatchingStrategies;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +33,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping(value = "/finder/me")
+@Api(value = "GenieAi Me Controller", description = "Operations pertaining to Me rest api")
 public class MeController {
 
     private PlayerRepository playerRepository;
