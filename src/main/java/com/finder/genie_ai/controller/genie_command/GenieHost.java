@@ -4,9 +4,9 @@ import org.springframework.web.client.RestTemplate;
 
 public class GenieHost {
 
-    private static final String genieChatURL = "http://192.168.0.8:5000/api/genie_answer?user_message=";
-    private static final String genieActionURL = "http://192.168.0.8:5000/api/genie_action?order=";
-    private static final String questionToGenieURL = "http://192.168.0.8:5000/api/genie_search?search_order=";
+    private static final String genieChatURL = "http://192.168.0.8:7777/api/genie_answer?user_message=";
+    private static final String genieActionURL = "http://192.168.0.8:7777/api/genie_action?order=";
+    private static final String questionToGenieURL = "http://192.168.0.8:7777/api/genie_search?search_order=";
 
     public static String sendMessageToGenie(String message) {
         RestTemplate restTemplate = new RestTemplate();
