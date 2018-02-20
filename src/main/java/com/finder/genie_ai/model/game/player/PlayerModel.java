@@ -31,7 +31,7 @@ public class PlayerModel {
     public void persist() {
         this.tier = Tier.BRONZE;
         this.score = 0;
-        this.point = 0;
+        this.point = 1000;
     }
 
 }

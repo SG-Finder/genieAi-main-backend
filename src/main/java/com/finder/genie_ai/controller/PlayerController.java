@@ -102,7 +102,7 @@ public class PlayerController {
         PlayerModel player = new PlayerModel();
         player.setNickname(command.getNickname());
         player.setUserId(userRepository.findByUserId(command.getUserId()).get());
-        player.setPoint(1000);
+        System.out.println(player.getPoint());
         player = playerRepository.save(player);
 
         HistoryModel history = new HistoryModel();
