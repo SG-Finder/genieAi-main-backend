@@ -73,14 +73,7 @@ public class ShopController {
     @RequestMapping(value = "", method = RequestMethod.POST)
      public ShopDealDTO activeShop(@RequestHeader("session-token") String token,
                                    @RequestBody @Valid DealCommand command,
-                                   BindingResult bindingResult,
-                                   HttpServletRequest request) throws JsonProcessingException {
-        if (!sessionTokenRedisRepository.isSessionValid(token)) {
-            throw new UnauthorizedException();
-        }
-        JsonElement element = new JsonParser().parse(sessionTokenRedisRepository.findSessionToken(token));
-        SessionModel sessionModel = new SessionModel(request.getRemoteAddr(), LocalDateTime.parse(element.getAsJsonObject().get("signin_at").getAsString()), LocalDateTime.now());
-        sessionTokenRedisRepository.updateSessionToken(token, mapper.writeValueAsString(sessionModel));
+                                   BindingResult bindingResult) {
 
         if (bindingResult.hasErrors()) {
             throw new BadRequestException("Invalid parameter form");
@@ -141,12 +134,9 @@ public class ShopController {
     })
     @RequestMapping(value = "/{itemType}", method = RequestMethod.GET, produces = "application/json")
     public BaseListItemModel getItemList(@RequestHeader("session-token") String token,
-                                                        @PathVariable("itemType") String itemType,
-                                                        @RequestParam("count") String count,
-                                                        @RequestParam("cursor") String cursor) {
-        if (!sessionTokenRedisRepository.isSessionValid(token)) {
-            throw new UnauthorizedException();
-        }
+                                         @PathVariable("itemType") String itemType,
+                                         @RequestParam("count") String count,
+                                         @RequestParam("cursor") String cursor) {
         int wantingCount, presentCursor;
 
         try {
